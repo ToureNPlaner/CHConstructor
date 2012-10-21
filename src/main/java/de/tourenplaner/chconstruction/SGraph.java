@@ -60,13 +60,15 @@ public abstract class SGraph {
     abstract int inEdgeID(int nodeID, int edgePos);    // returns edge ID of edgePos-th inEdge of nodeID
 
 
-    abstract int edgeWeight(int edgeID);
-
     abstract int edgeSource(int edgeID);
 
     abstract int edgeTarget(int edgeID);
 
+    abstract int edgeWeight(int edgeID);
+
     abstract int edgeLength(int edgeID);
+
+    abstract int edgeHeight(int edgeID);
 
     abstract int edgeSkippedA(int edgeID);
 

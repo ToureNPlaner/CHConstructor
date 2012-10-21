@@ -142,7 +142,7 @@ public class GraphReaderTXT implements GraphReader {
             }
         }
 
-        int edgeSource, edgeTarget, edgeWeight, edgeLength;
+        int edgeSource, edgeTarget, edgeWeight, edgeLength, edgeHeight;
         for (int i = 0; i < nofEdges; i++) {
             splittedLine = COMPILE.split(inb.readLine());
             if (splittedLine.length == 4) {
@@ -150,7 +150,11 @@ public class GraphReaderTXT implements GraphReader {
                 edgeTarget = Integer.parseInt(splittedLine[1]);
                 edgeLength = Integer.parseInt(splittedLine[2]);
                 edgeWeight = calcWeight(edgeLength, Integer.parseInt(splittedLine[3]));
-                graph.addEdge(edgeSource, edgeTarget, edgeWeight, edgeLength);
+                edgeHeight = graph.height(edgeTarget)-graph.height(edgeSource);
+                if (edgeHeight < 0) {
+                    edgeHeight = 0;
+                }
+                graph.addEdge(edgeSource, edgeTarget, edgeWeight, edgeLength, edgeHeight);
 
                 if ((i % (nofEdges / 10)) == 0) {
                     System.err.print((10 * i / (nofEdges / 10) + "% "));

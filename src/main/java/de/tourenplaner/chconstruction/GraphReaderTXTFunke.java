@@ -57,13 +57,17 @@ public class GraphReaderTXTFunke implements GraphReader {
             }
         }
 
-        int edgeSource, edgeTarget, edgeWeight, edgeType;
+        int edgeSource, edgeTarget, edgeWeight, edgeHeight;
         for (int i = 0; i < nofEdges; i++) {
             splittedLine = COMPILE.split(inb.readLine());
             edgeSource = Integer.parseInt(splittedLine[0]);
             edgeTarget = Integer.parseInt(splittedLine[1]);
             edgeWeight = Integer.parseInt(splittedLine[2]);
-            graph.addEdge(edgeSource, edgeTarget, edgeWeight, -1);
+            edgeHeight = graph.height(edgeTarget)-graph.height(edgeSource);
+            if (edgeHeight < 0) {
+                edgeHeight = 0;
+            }
+            graph.addEdge(edgeSource, edgeTarget, edgeWeight, edgeWeight, edgeHeight);
 
             if ((i % (nofEdges / 10)) == 0) {
                 System.err.print((10 * i / (nofEdges / 10) + "% "));
