@@ -127,20 +127,4 @@ public class Dijkstra {
 
 }
 
-class PQElement implements Comparable<PQElement> {
-
-    public int key;
-    public int value;
-
-    PQElement(int a, int b) {
-        key = a;
-        value = b;
-    }
-
-    public int compareTo(PQElement o) {
-        if (key > o.key) return 1;
-        else if (key == o.key) return 0;
-        else return -1;
-    }
-}
 
