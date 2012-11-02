@@ -1,4 +1,13 @@
 /*
+ * (C) Copyright 2012 Peter Vollmer
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; version 2
+ * of the License.
+ */
+
+/*
  * (C) Copyright 2012 Dr. Stefan Funke
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +33,7 @@ import java.util.PriorityQueue;
  * skipped edges are set after the very end only !!!
  */
 
-public class CHConstructor {
+public class CSPCHConstructor {
 
     RAMGraph myGraph;        // original graph
 
@@ -32,7 +41,9 @@ public class CHConstructor {
 
     RAMGraph tempGraph; // store the residual graph
 
-    CHConstructor(RAMGraph _myGraph) {
+    int cnt;
+
+    CSPCHConstructor(RAMGraph _myGraph) {
         myGraph = _myGraph;
         myCHGraph = new RAMGraph(myGraph.nofNodes(), 3 * myGraph.nofEdges());  /// KONSTANTE GRUSEL!!!!!!!
         tempGraph = new RAMGraph(myGraph.nofNodes(), myGraph.nofEdges());
@@ -48,10 +59,12 @@ public class CHConstructor {
         }
         tempGraph.setupOffsets();
 
+        cnt=0;
+
         // tempGraph.sanityCheck();
     }
 
-    int contractNode(int curNode, Dijkstra myDijkstra, int[] srcSC, int[] trgSC, int[] wgtSC, int[] lgthSC, int[] hgtSC, int boundSC)    // return number of computed SCs
+    int contractNode(int curNode, CSPDijkstra myDijkstra, int[] srcSC, int[] trgSC, int[] wgtSC, int[] lgthSC, int[] altSC, int boundSC)    // return number of computed SCs
     {                                                                                                            // stops if boundSC is reached
         int nofSC = 0;
         for (int i = 0; i < tempGraph.nofInEdges(curNode); i++) {
@@ -62,21 +75,58 @@ public class CHConstructor {
                 int curTrg = tempGraph.edgeTarget(curTrgEdge);
                 int weightSC = tempGraph.edgeWeight(curSrcEdge) + tempGraph.edgeWeight(curTrgEdge);
                 int lengthSC = tempGraph.edgeLength(curSrcEdge) + tempGraph.edgeLength(curTrgEdge);
-                int heightSC = tempGraph.edgeAltitudeDifference(curSrcEdge) + tempGraph.edgeAltitudeDifference(curTrgEdge);
-                myDijkstra.runDijkstra(curSrc, curTrg);
+                int altitudeSC = tempGraph.edgeAltitudeDifference(curSrcEdge) + tempGraph.edgeAltitudeDifference(curTrgEdge);
+                cnt++;
+                boolean added = addShortcut(myDijkstra,curSrc,curTrg,weightSC,altitudeSC);
                 //if (d==weightSC) // better: check if pred[curTrg]==curNode and pred[curNode]==curSrc
-                if (((myDijkstra.pred(curTrg) == curNode) && (myDijkstra.pred(curNode) == curSrc))) {
+                if (added) {
                     srcSC[nofSC] = curSrc;
                     trgSC[nofSC] = curTrg;
                     wgtSC[nofSC] = weightSC;
                     lgthSC[nofSC] = lengthSC;
-                    hgtSC[nofSC] = heightSC;
+                    altSC[nofSC] = altitudeSC;
                     nofSC++;
                 }
                 if (nofSC == boundSC) return boundSC;
             }
         }
         return nofSC;
+    }
+
+    boolean addShortcut (CSPDijkstra myDijkstra, int curSrc, int curTrg, int weightSC, int altitudeSC) {
+        int upperBound = 4096;
+        int lowerBound = 0;
+        int midLambda;
+        int cnt = 0;
+        CSPPathAttributes witAttributes;
+        while (true) {
+
+            System.out.println("Abstand " + cnt + " : " + (upperBound-lowerBound));
+
+            if (upperBound-lowerBound <= 1){
+                return true;
+            }
+            midLambda = (upperBound + lowerBound)/2;
+            witAttributes = myDijkstra.runDijkstra(curSrc,curTrg,midLambda);
+            if (weightSC == witAttributes.getLength() && altitudeSC == witAttributes.getAltitude()){
+                return true;
+            }
+            if(weightSC >= witAttributes.getLength() && altitudeSC >= witAttributes.getAltitude()){
+                return false;
+            }
+            //lambda of the intersection point of the both functions.
+            //System.out.println("Nenner: " + ((weightSC-witAttributes.getLength())-(altitudeSC-witAttributes.getAltitude())) + " altitudeSC: " + altitudeSC + " altitudeWit: " + witAttributes.getAltitude());
+            int lambdaIntersect = 4096*(altitudeSC-witAttributes.getAltitude())/((weightSC-witAttributes.getLength())-(altitudeSC-witAttributes.getAltitude()));
+            if(lambdaIntersect < lowerBound || lambdaIntersect > upperBound){
+               return false;
+            }
+            if (weightSC-altitudeSC < witAttributes.getLength()-witAttributes.getAltitude()){
+                lowerBound = midLambda;
+            } else {
+                upperBound = midLambda;
+            }
+
+        }
     }
 
     int contractLevel(int newLevel)    // contracts an independent set of the current tempGraph
@@ -142,7 +192,7 @@ public class CHConstructor {
 
 
         // instantiate Dijkstra
-        Dijkstra myDijkstra = new Dijkstra(tempGraph);
+        CSPDijkstra myDijkstra = new CSPDijkstra(tempGraph);
 
         int tentNofSC;
         candSCoffset[0] = 0;
@@ -295,7 +345,7 @@ public class CHConstructor {
 
         newTempGraph.setupOffsets();
 
-        tempGraph = newTempGraph.pruneGraph();
+        //tempGraph = newTempGraph.pruneGraph();
         // now create new tempGraph which consists of old graph (with edges between uncontracted nodes)
         // and all shortcuts created
         //

@@ -68,7 +68,7 @@ public abstract class SGraph {
 
     abstract int edgeLength(int edgeID);
 
-    abstract int edgeHeight(int edgeID);
+    abstract int edgeAltitudeDifference(int edgeID);
 
     abstract int edgeSkippedA(int edgeID);
 

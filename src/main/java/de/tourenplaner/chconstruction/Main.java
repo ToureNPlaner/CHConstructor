@@ -94,8 +94,8 @@ public class Main {
 
         options.addOption("ti", "text-input", false, "Read input graph in text mode");
         options.addOption("to", "text-output", false, "Write output graph in text mode");
-        options.addOption("if", "input-format", true, "Choose from binfunk, textfunk, texttour");
-        options.addOption("of", "output-format", true, "Choose from binfunk, bintour, textfunk, texttour");
+        options.addOption("if", "input-format", true, "Choose from binfunk, textfunk, textsabine, text");
+        options.addOption("of", "output-format", true, "Choose from binfunk, bintour, textfunk, texttour, texttourcsp");
         options.addOption("i", "input-file", true, "The graph file to read from, use - for standard input");
         options.addOption("o", "output-file", true, "The graph file to write the result to, use - for standard output");
         options.addOption("co", "coure-file", true, "The filename for the core file");
@@ -135,10 +135,10 @@ public class Main {
             }
 
             RAMGraph ramGraph;
-            if (inputFormat.equals("texttour")) {
-                ramGraph = new GraphReaderTXT().createRAMGraph(istream);
-            } else if (inputFormat.equals("textfunk")) {
-                ramGraph = new GraphReaderTXT().createRAMGraph(istream);
+            if (inputFormat.equals("textfunk")) {
+                ramGraph = new GraphReaderTXTFunke().createRAMGraph(istream);
+            } else if (inputFormat.equals("textsabine")) {
+                ramGraph = new GraphReaderTXTSabine().createRAMGraph(istream);
             } else if (inputFormat.equals("text")) {
                 ramGraph = new GraphReaderTXT().createRAMGraph(istream);
             } else if (inputFormat.equals("binfunk")) {
@@ -155,7 +155,8 @@ public class Main {
             preCHBenchTest(ramGraph, prunedGraph);
             ramGraph = null;
 
-            CHConstructor myCH = new CHConstructor(prunedGraph);
+            //CHConstructor myCH = new CHConstructor(prunedGraph);
+            CSPCHConstructor myCH = new CSPCHConstructor(prunedGraph);
             long overallTime = System.currentTimeMillis();
             long curTime, timeDelta;
 
@@ -195,6 +196,8 @@ public class Main {
 
             if (outputFormat.equals("texttour")) {
                 new GraphWriterTXTTourenplaner().writeRAMGraph(ostream, graphCH);
+            } else if (outputFormat.equals("texttourcsp")) {
+                new GraphWriterTXTTourenplanerCSP().writeRAMGraph(ostream, graphCH);
             } else if (outputFormat.equals("textfunk")) {
                 new GraphWriterTXTFunke().writeRAMGraph(ostream, graphCH);
             } else if (outputFormat.equals("bintour")) {
