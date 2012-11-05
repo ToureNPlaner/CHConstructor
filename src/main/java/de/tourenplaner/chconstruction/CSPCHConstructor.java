@@ -41,11 +41,11 @@ public class CSPCHConstructor {
 
     RAMGraph tempGraph; // store the residual graph
 
-    int cnt;
+    int cnt = 0;
 
     CSPCHConstructor(RAMGraph _myGraph) {
         myGraph = _myGraph;
-        myCHGraph = new RAMGraph(myGraph.nofNodes(), 3 * myGraph.nofEdges());  /// KONSTANTE GRUSEL!!!!!!!
+        myCHGraph = new RAMGraph(myGraph.nofNodes(), 1000 * myGraph.nofEdges());  /// KONSTANTE GRUSEL!!!!!!!
         tempGraph = new RAMGraph(myGraph.nofNodes(), myGraph.nofEdges());
         for (int i = 0; i < myGraph.nofNodes(); i++)    // first add the original graph
         {
@@ -58,8 +58,6 @@ public class CSPCHConstructor {
             tempGraph.addEdge(orgSrc, orgTrg, orgWeight, orgLength, orgHeight, -1, -1);
         }
         tempGraph.setupOffsets();
-
-        cnt=0;
 
         // tempGraph.sanityCheck();
     }
@@ -76,10 +74,9 @@ public class CSPCHConstructor {
                 int weightSC = tempGraph.edgeWeight(curSrcEdge) + tempGraph.edgeWeight(curTrgEdge);
                 int lengthSC = tempGraph.edgeLength(curSrcEdge) + tempGraph.edgeLength(curTrgEdge);
                 int altitudeSC = tempGraph.edgeAltitudeDifference(curSrcEdge) + tempGraph.edgeAltitudeDifference(curTrgEdge);
-                cnt++;
-                boolean added = addShortcut(myDijkstra,curSrc,curTrg,weightSC,altitudeSC);
+                boolean adden = addShortcut(myDijkstra,curSrc,curTrg,weightSC,altitudeSC);
                 //if (d==weightSC) // better: check if pred[curTrg]==curNode and pred[curNode]==curSrc
-                if (added) {
+                if (adden && myDijkstra.pred(curTrg) == curNode) {
                     srcSC[nofSC] = curSrc;
                     trgSC[nofSC] = curTrg;
                     wgtSC[nofSC] = weightSC;
@@ -97,11 +94,11 @@ public class CSPCHConstructor {
         int upperBound = 4096;
         int lowerBound = 0;
         int midLambda;
-        int cnt = 0;
+
         CSPPathAttributes witAttributes;
         while (true) {
-
-            System.out.println("Abstand " + cnt + " : " + (upperBound-lowerBound));
+            cnt++;
+            //System.out.println("Abstand " + cnt + " : " + (upperBound-lowerBound));
 
             if (upperBound-lowerBound <= 1){
                 return true;
@@ -109,9 +106,11 @@ public class CSPCHConstructor {
             midLambda = (upperBound + lowerBound)/2;
             witAttributes = myDijkstra.runDijkstra(curSrc,curTrg,midLambda);
             if (weightSC == witAttributes.getLength() && altitudeSC == witAttributes.getAltitude()){
+                //System.out.println("gleich");
                 return true;
             }
             if(weightSC >= witAttributes.getLength() && altitudeSC >= witAttributes.getAltitude()){
+                //System.out.println("dominanter pfad");
                 return false;
             }
             //lambda of the intersection point of the both functions.
@@ -122,8 +121,10 @@ public class CSPCHConstructor {
             }
             if (weightSC-altitudeSC < witAttributes.getLength()-witAttributes.getAltitude()){
                 lowerBound = midLambda;
+                System.out.println("linke mitte");
             } else {
                 upperBound = midLambda;
+                System.out.println("rechte mitte");
             }
 
         }

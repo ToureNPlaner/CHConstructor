@@ -71,7 +71,7 @@ public class CSPDijkstra {
     // writes the result of distance and altitudeSum from src to trg into returnLength and returnAltitude
     CSPPathAttributes runDijkstra(int src, int trg, int lambda)
     {
-        if ((lastSource != src)) {
+        //if ((lastSource != src)) {
             // clean up previously touched nodes
             for (int i = 0; i < nofTouchedNodes; i++) {
                 dist[touchedNodes[i]] = Integer.MAX_VALUE;
@@ -84,9 +84,9 @@ public class CSPDijkstra {
             // start with src
             label(src, 0, 0, 0, -1);
             lastSource = src;
-        } else if (settled[trg]) {
-            return new CSPPathAttributes(dist[trg], weightSum[trg], altitudeSum[trg]);
-        }
+        //} else if (settled[trg]) {
+        //    return new CSPPathAttributes(dist[trg], weightSum[trg], altitudeSum[trg]);
+        //}
         // otherwise we have to process pq until settling trg
         boolean targetFound = false;
         while ((!myQueue.isEmpty()) && !targetFound) {
@@ -105,9 +105,10 @@ public class CSPDijkstra {
                     int cur_trg = myGraph.edgeTarget(cur_edge);
                     int cur_weight = myGraph.edgeWeight(cur_edge);
                     int cur_altitude = myGraph.edgeAltitudeDifference(cur_edge);
-
-                    if (dist[cur_trg] > (cur_weight-cur_altitude)*lambda + 4096*cur_altitude) {
-                        label(cur_trg, cur_dist + (cur_weight-cur_altitude)*lambda + cur_altitude, cur_altitudeSum + cur_altitude, cur_weightSum + cur_weight , cur_node);
+                    //System.out.println("Dist Target: "+ dist[cur_trg]+ " neue dist: " + ((cur_weight-cur_altitude)*lambda + 4096*cur_altitude));
+                    int newDist = cur_dist + (cur_weight-cur_altitude)*lambda + 4096*cur_altitude;
+                    if (dist[cur_trg] > newDist) {
+                        label(cur_trg, newDist , cur_altitudeSum + cur_altitude, cur_weightSum + cur_weight , cur_node);
                     }
                 }
             }
