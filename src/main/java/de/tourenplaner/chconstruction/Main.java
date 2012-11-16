@@ -100,11 +100,13 @@ public class Main {
         options.addOption("o", "output-file", true, "The graph file to write the result to, use - for standard output");
         options.addOption("co", "coure-file", true, "The filename for the core file");
         options.addOption("ml", "max-level", true, "The maximum level for the core graph (default 40)");
+        options.addOption("t", "ch-type", true, "Choose from cspch, ch");
         options.addOption("h", "help", false, "Show this help message");
 
         BufferedInputStream istream;
         String inputFormat = "texttour";
         String outputFormat = "texttour";
+        String chType = "ch";
 
         try {
             CommandLine cmd = parser.parse(options, args);
@@ -115,6 +117,14 @@ public class Main {
             }
             if (!cmd.hasOption("i")) {
                 System.err.println("No input file specified, this is mandatory");
+                HelpFormatter fmt = new HelpFormatter();
+                fmt.printHelp("chconstructor", options);
+                return;
+            }
+            if (cmd.hasOption("t")){
+                chType=cmd.getOptionValue("t");
+            }else {
+                System.err.println("No ch type choosen, this is mandatory");
                 HelpFormatter fmt = new HelpFormatter();
                 fmt.printHelp("chconstructor", options);
                 return;
@@ -155,8 +165,17 @@ public class Main {
             preCHBenchTest(ramGraph, prunedGraph);
             ramGraph = null;
 
-            //CHConstructor myCH = new CHConstructor(prunedGraph);
-            CSPCHConstructor myCH = new CSPCHConstructor(prunedGraph);
+            Constructor myCH;
+            if (chType.equals("ch")){
+                myCH = new CHConstructor(prunedGraph);
+            } else if (chType.equals("cspch")) {
+                myCH = new CSPCHConstructor(prunedGraph);
+            }  else {
+                System.err.println("Unknown ch-type " + inputFormat);
+                return;
+            }
+
+
             long overallTime = System.currentTimeMillis();
             long curTime, timeDelta;
 
@@ -216,8 +235,12 @@ public class Main {
                     maxLevel = Integer.parseInt(cmd.getOptionValue("ml"));
                 new CoreExporter().exportCore(graphCH, new FileOutputStream(cmd.getOptionValue("co")), maxLevel);
             }
-
-            withChBench(prunedGraph, graphCH);
+            if (chType.equals("cspch")) {
+                CSPGraphInspector inspector= new CSPGraphInspector(graphCH);
+                inspector.inspectGraph();
+            }else{
+                withChBench(prunedGraph, graphCH);
+            }
 
         } catch (FileNotFoundException fnf) {
             System.err.println("Could not open the input file " + fnf.getMessage());
@@ -227,6 +250,5 @@ public class Main {
             System.err.println("Unexpected parse exception when reading command line " + ps.getMessage());
         }
     }
-
 
 }

@@ -24,11 +24,9 @@ import java.util.PriorityQueue;
  * skipped edges are set after the very end only !!!
  */
 
-public class CHConstructor {
+public class CHConstructor extends Constructor {
 
     RAMGraph myGraph;        // original graph
-
-    RAMGraph myCHGraph;    // store the augmented result graph
 
     RAMGraph tempGraph; // store the residual graph
 

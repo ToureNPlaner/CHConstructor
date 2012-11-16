@@ -136,6 +136,7 @@ public class RAMGraph extends SGraph {
 
         // count how many out/in-edges there are for each node
         for (int j = 0; j < nofEdges; j++) {
+            //System.out.println("edge "+j+" target= "+edgeTarget[j]+ ", skippedA="+edgeSkippedA[j]);
             outCount[edgeSource[j]]++;
             inCount[edgeTarget[j]]++;
         }
@@ -220,6 +221,43 @@ public class RAMGraph extends SGraph {
         //	System.err.println(start+"--"+end+" with pivot "+storage+" and "+pivot);
         quickSortEdgeArray(start, storage - 1);
         quickSortEdgeArray(storage + 1, end);
+    }
+
+    RAMGraph pruneGraphSelfloops()
+    // get rid of superfluous edges
+    {
+        int selfLoops = 0;
+
+        boolean[] survivorEdge = new boolean[nofEdges()];
+        for (int j = 0; j < nofEdges(); j++)
+            survivorEdge[j] = true;
+        for (int i = 0; i < nofNodes(); i++)
+            for (int j = 0; j < nofOutEdges(i); j++) {
+                int curEdge = outEdgeID(i, j);
+                int curTarget = edgeTarget(curEdge);
+                if (curTarget == i) {
+                    survivorEdge[curEdge] = false;
+                    selfLoops++;
+                }
+            }
+        int newNofEdges = 0;
+        for (int j = 0; j < nofEdges(); j++)
+            if (survivorEdge[j])
+                newNofEdges++;
+        RAMGraph resultGraph = new RAMGraph(nofNodes(), newNofEdges);
+
+        for (int i = 0; i < nofNodes(); i++)
+            resultGraph.addNode(xCoord(i), yCoord(i), altNodeID(i), height(i), OSMID(i), level[i]);
+        for (int j = 0; j < nofEdges(); j++) {
+            if (survivorEdge[j]) {
+                int curSrc = edgeSource(j), curTrg = edgeTarget(j), curWeight = edgeWeight(j), curLength = edgeLength(j), curAltDiff = edgeAltitudeDifference(j),
+                        curA = edgeSkippedA(j), curB = edgeSkippedB(j);
+                resultGraph.addEdge(curSrc, curTrg, curWeight, curLength, curAltDiff, curA, curB);
+            }
+        }
+        resultGraph.setupOffsets();
+        System.err.println("pruneGraph: " + nofEdges() + "/" + newNofEdges + " with " + selfLoops + " selfLoops");
+        return resultGraph;
     }
 
     RAMGraph pruneGraph()

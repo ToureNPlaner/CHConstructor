@@ -21,8 +21,6 @@ import java.util.PriorityQueue;
 public class CSPDijkstra {
     SGraph myGraph;
     int[] dist;
-    int[] altitudeSum;
-    int[] weightSum;
     int[] pred;
     boolean[] settled;
     PriorityQueue<PQElement> myQueue;
@@ -34,17 +32,12 @@ public class CSPDijkstra {
         myGraph = _myGraph;
         dist = new int[myGraph.nofNodes()];
 
-        altitudeSum = new int[myGraph.nofNodes()]; //sum of all positive altitudeSum from src to this node
-        weightSum = new int[myGraph.nofNodes()]; //sum of weightSum from src to this node
 
         pred = new int[myGraph.nofNodes()];
         settled = new boolean[myGraph.nofNodes()];
         touchedNodes = new int[myGraph.nofNodes()];
         for (int i = 0; i < myGraph.nofNodes(); i++) {
             dist[i] = Integer.MAX_VALUE;
-            weightSum[i] = Integer.MAX_VALUE; //unnecessary to initialize because for the dijkstra only dist is relevant
-            altitudeSum[i] = Integer.MAX_VALUE; //unnecessary because for the dijkstra only dist is relevant
-
             pred[i] = -1;
             settled[i] = false;
         }
@@ -53,13 +46,14 @@ public class CSPDijkstra {
         nofTouchedNodes = 0;
     }
 
-    void label(int v, int d, int a, int l, int p) {
+    void label(int v, int d, int p) {
+        if (v < 0){
+            System.err.println("CSPDijkstra v: "+v);
+        }
         if (dist[v] == Integer.MAX_VALUE) {
             touchedNodes[nofTouchedNodes++] = v;
         }
         dist[v] = d;
-        altitudeSum[v] = a;
-        weightSum[v] = l;
         pred[v] = p;
         myQueue.add(new PQElement(d, v));
     }
@@ -69,53 +63,63 @@ public class CSPDijkstra {
         return pred[v];
     }
     // writes the result of distance and altitudeSum from src to trg into returnLength and returnAltitude
-    CSPPathAttributes runDijkstra(int src, int trg, int lambda)
+    int runDijkstra(int src, int trg, int lambda, int maxLambda)
     {
+         return internRunDijkstra(src,trg,lambda,maxLambda,false);
+    }
+
+    int runDijkstraWithoutSC(int src, int trg, int lambda, int maxLambda)
+    {
+        return internRunDijkstra(src,trg,lambda, maxLambda,true);
+    }
+
+    private int internRunDijkstra (int src, int trg, int lambda, int maxLambda, boolean withoutSC){
         //if ((lastSource != src)) {
-            // clean up previously touched nodes
-            for (int i = 0; i < nofTouchedNodes; i++) {
-                dist[touchedNodes[i]] = Integer.MAX_VALUE;
-                weightSum[touchedNodes[i]] = Integer.MAX_VALUE;
-                altitudeSum[touchedNodes[i]] = Integer.MAX_VALUE;
-                settled[touchedNodes[i]] = false;
-            }
-            nofTouchedNodes = 0;
-            myQueue.clear();
-            // start with src
-            label(src, 0, 0, 0, -1);
-            lastSource = src;
+        // clean up previously touched nodes
+        //System.err.println("CSPDijkstra: Src= "+src+", Trg= "+trg);
+        for (int i = 0; i < nofTouchedNodes; i++) {
+            dist[touchedNodes[i]] = Integer.MAX_VALUE;
+            settled[touchedNodes[i]] = false;
+        }
+        nofTouchedNodes = 0;
+        myQueue.clear();
+        // start with src
+        label(src, 0,  -1);
+        lastSource = src;
         //} else if (settled[trg]) {
         //    return new CSPPathAttributes(dist[trg], weightSum[trg], altitudeSum[trg]);
         //}
-        // otherwise we have to process pq until settling trg
+        // otherwise we have to process pq until settling trg                     CSPPathAttributes
         boolean targetFound = false;
         while ((!myQueue.isEmpty()) && !targetFound) {
             PQElement cur = myQueue.remove();
             int cur_dist = cur.key;
             int cur_node = cur.value;
-            int cur_altitudeSum = altitudeSum[cur_node];
-            int cur_weightSum = weightSum[cur_node];
-
             if (cur_dist == dist[cur_node]) {
                 settled[cur_node] = true;
                 if (cur_node == trg)
                     targetFound = true;
                 for (int i = 0; i < myGraph.nofOutEdges(cur_node); i++) {
                     int cur_edge = myGraph.outEdgeID(cur_node, i);
+                    if (withoutSC){
+                        if (myGraph.edgeSkippedA(cur_edge) >= 0 ){
+                            continue;
+                        }
+                    }
                     int cur_trg = myGraph.edgeTarget(cur_edge);
                     int cur_weight = myGraph.edgeWeight(cur_edge);
                     int cur_altitude = myGraph.edgeAltitudeDifference(cur_edge);
-                    //System.out.println("Dist Target: "+ dist[cur_trg]+ " neue dist: " + ((cur_weight-cur_altitude)*lambda + 4096*cur_altitude));
-                    int newDist = cur_dist + (cur_weight-cur_altitude)*lambda + 4096*cur_altitude;
+                    int newDist = cur_dist + (cur_weight-cur_altitude)*lambda + maxLambda*cur_altitude;
                     if (dist[cur_trg] > newDist) {
-                        label(cur_trg, newDist , cur_altitudeSum + cur_altitude, cur_weightSum + cur_weight , cur_node);
+                        label(cur_trg, newDist , cur_edge);
                     }
                 }
             }
         }
         // System.err.println("Dijkstra has touched "+nofTouchedNodes);
-        return new CSPPathAttributes(dist[trg], weightSum[trg], altitudeSum[trg]);
+        return dist[trg];
     }
+
 
     void printPath(int trg) {
         if (!settled[trg])

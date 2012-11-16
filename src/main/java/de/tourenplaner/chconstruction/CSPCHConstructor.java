@@ -33,19 +33,15 @@ import java.util.PriorityQueue;
  * skipped edges are set after the very end only !!!
  */
 
-public class CSPCHConstructor {
+public class CSPCHConstructor extends Constructor{
 
     RAMGraph myGraph;        // original graph
 
-    RAMGraph myCHGraph;    // store the augmented result graph
-
     RAMGraph tempGraph; // store the residual graph
-
-    int cnt = 0;
 
     CSPCHConstructor(RAMGraph _myGraph) {
         myGraph = _myGraph;
-        myCHGraph = new RAMGraph(myGraph.nofNodes(), 1000 * myGraph.nofEdges());  /// KONSTANTE GRUSEL!!!!!!!
+        myCHGraph = new RAMGraph(myGraph.nofNodes(), 10 * myGraph.nofEdges());  /// KONSTANTE GRUSEL!!!!!!!
         tempGraph = new RAMGraph(myGraph.nofNodes(), myGraph.nofEdges());
         for (int i = 0; i < myGraph.nofNodes(); i++)    // first add the original graph
         {
@@ -76,13 +72,15 @@ public class CSPCHConstructor {
                 int altitudeSC = tempGraph.edgeAltitudeDifference(curSrcEdge) + tempGraph.edgeAltitudeDifference(curTrgEdge);
                 boolean adden = addShortcut(myDijkstra,curSrc,curTrg,weightSC,altitudeSC);
                 //if (d==weightSC) // better: check if pred[curTrg]==curNode and pred[curNode]==curSrc
-                if (adden && myDijkstra.pred(curTrg) == curNode) {
+                if (adden){ //&& myDijkstra.pred(curTrg) == curNode) {
                     srcSC[nofSC] = curSrc;
                     trgSC[nofSC] = curTrg;
                     wgtSC[nofSC] = weightSC;
                     lgthSC[nofSC] = lengthSC;
                     altSC[nofSC] = altitudeSC;
                     nofSC++;
+
+
                 }
                 if (nofSC == boundSC) return boundSC;
             }
@@ -91,42 +89,54 @@ public class CSPCHConstructor {
     }
 
     boolean addShortcut (CSPDijkstra myDijkstra, int curSrc, int curTrg, int weightSC, int altitudeSC) {
-        int upperBound = 4096;
+        int maxLambda = 16384;
+        int upperBound = maxLambda;
         int lowerBound = 0;
         int midLambda;
-
-        CSPPathAttributes witAttributes;
         while (true) {
-            cnt++;
-            //System.out.println("Abstand " + cnt + " : " + (upperBound-lowerBound));
 
             if (upperBound-lowerBound <= 1){
                 return true;
             }
             midLambda = (upperBound + lowerBound)/2;
-            witAttributes = myDijkstra.runDijkstra(curSrc,curTrg,midLambda);
-            if (weightSC == witAttributes.getLength() && altitudeSC == witAttributes.getAltitude()){
-                //System.out.println("gleich");
+            myDijkstra.runDijkstra(curSrc,curTrg,midLambda,maxLambda);
+            backTrack(myDijkstra,curSrc,curTrg);
+            if (weightSC == weightSum && altitudeSC == resourceSum){
+                //System.err.println("gleich");
                 return true;
             }
-            if(weightSC >= witAttributes.getLength() && altitudeSC >= witAttributes.getAltitude()){
-                //System.out.println("dominanter pfad");
+            if(weightSC >= weightSum && altitudeSC >= resourceSum){
+                //System.err.println("dominanter pfad");
                 return false;
             }
             //lambda of the intersection point of the both functions.
-            //System.out.println("Nenner: " + ((weightSC-witAttributes.getLength())-(altitudeSC-witAttributes.getAltitude())) + " altitudeSC: " + altitudeSC + " altitudeWit: " + witAttributes.getAltitude());
-            int lambdaIntersect = 4096*(altitudeSC-witAttributes.getAltitude())/((weightSC-witAttributes.getLength())-(altitudeSC-witAttributes.getAltitude()));
+            int lambdaIntersect = maxLambda*(altitudeSC-resourceSum)/((weightSC-weightSum)-(altitudeSC-resourceSum));
             if(lambdaIntersect < lowerBound || lambdaIntersect > upperBound){
                return false;
             }
-            if (weightSC-altitudeSC < witAttributes.getLength()-witAttributes.getAltitude()){
+            if (weightSC-altitudeSC < weightSum-resourceSum){
                 lowerBound = midLambda;
-                System.out.println("linke mitte");
+                //System.err.println("linke mitte");
             } else {
                 upperBound = midLambda;
-                System.out.println("rechte mitte");
+                //System.err.println("rechte mitte");
             }
 
+        }
+    }
+
+    int weightSum;
+    int resourceSum;
+    private void backTrack(CSPDijkstra myDijkstra, int curSrc, int curTrg) {
+        weightSum = 0;
+        resourceSum = 0;
+        int curNode = curTrg;
+        int curEdge;
+        while (curNode != curSrc){
+            curEdge = myDijkstra.pred(curNode);
+            weightSum += myDijkstra.myGraph.edgeWeight(curEdge);
+            resourceSum += myDijkstra.myGraph.edgeAltitudeDifference(curEdge);
+            curNode = myDijkstra.myGraph.edgeSource(curEdge);
         }
     }
 
@@ -171,6 +181,10 @@ public class CSPCHConstructor {
             }
         }
         System.err.println("We have an IS of size " + nofCandidates);
+        for(int i=0; i<nofCandidates; i++)
+        {
+            assert(stillIndep[candidates[i]]==true);
+        }
         //PQElement curEl=degreePQ.peek();
         int boundSC = degSum / nofCandidates + 1;
         // we know that we can find a node which produces at most boundSC shortcuts !!!
@@ -280,9 +294,12 @@ public class CSPCHConstructor {
                     )
                     ) {
                 realContract++;
+                assert(stillIndep[candidates[curNode]]==true);
                 contracted[candidates[curNode]] = true;
                 // now copy its SCs in final SC list
                 for (int i = candSCoffset[curNode]; i < candSCoffset[curNode + 1]; i++) {
+                    assert(stillIndep[trgSCall[i]]==false);
+                    assert(stillIndep[srcSCall[i]]==false);
                     srcSCfinal[totalNofSC] = srcSCall[i];
                     trgSCfinal[totalNofSC] = trgSCall[i];
                     wgtSCfinal[totalNofSC] = wgtSCall[i];
@@ -315,10 +332,8 @@ public class CSPCHConstructor {
         // * add all created shortcuts to myCHgraph
         // * construct new tempGraph consisting of all surviving nodes and edges and shortcuts
 
-
         RAMGraph newTempGraph = new RAMGraph(newNofNodes, newNofEdges);
         int[] old2new = new int[tempGraph.nofNodes()];
-
         for (int i = 0; i < tempGraph.nofNodes(); i++)
             if (!contracted[i]) {
                 old2new[i] = newTempGraph.addNode(tempGraph.xCoord(i), tempGraph.yCoord(i), tempGraph.altNodeID(i), tempGraph.height(i), tempGraph.OSMID(i), 0);
@@ -328,17 +343,21 @@ public class CSPCHConstructor {
                 myCHGraph.level[tempGraph.altNodeID(i)] = newLevel;
             }
 
-        // copy surviving edges to newTempGraph
+
+        /// / copy surviving edges to newTempGraph
         for (int j = 0; j < tempGraph.nofEdges(); j++) {
             int curSrc = tempGraph.edgeSource(j), curTrg = tempGraph.edgeTarget(j), curWgt = tempGraph.edgeWeight(j), curEdgeLength = tempGraph.edgeLength(j), curEdgeHeight = tempGraph.edgeAltitudeDifference(j);
+
             if ((!contracted[curSrc]) && (!contracted[curTrg]))    // copy edge to newTempGraph
             {
+                assert(old2new[curSrc]!=-1);
+                assert(old2new[curTrg]!=-1);
                 newTempGraph.addEdge(old2new[curSrc], old2new[curTrg], curWgt, curEdgeLength, curEdgeHeight, -2, -2);
             }
         }
 
         // now add SC edges to newTempGRaph as well as myCHGraph
-
+        System.out.println("No of added SCs: " + totalNofSC);
         for (int j = 0; j < totalNofSC; j++) {
             newTempGraph.addEdge(old2new[srcSCfinal[j]], old2new[trgSCfinal[j]], wgtSCfinal[j], lgthSCfinal[j], altDiffSCfinal[j], -2, -2);
             myCHGraph.addEdge(tempGraph.altNodeID(srcSCfinal[j]), tempGraph.altNodeID(trgSCfinal[j]), wgtSCfinal[j], lgthSCfinal[j], altDiffSCfinal[j], -2, -2);
@@ -346,6 +365,7 @@ public class CSPCHConstructor {
 
         newTempGraph.setupOffsets();
 
+        tempGraph=newTempGraph.pruneGraphSelfloops();
         //tempGraph = newTempGraph.pruneGraph();
         // now create new tempGraph which consists of old graph (with edges between uncontracted nodes)
         // and all shortcuts created
