@@ -53,13 +53,14 @@ public class GraphReaderTXTSabine implements GraphReader {
         float x, y;
         int height;
         String[] splittedLine;
+        int iDCounter = 0;
         for (int i = 0; i < nofNodes; i++) {
             splittedLine = COMPILE.split(inb.readLine());
             x = Float.parseFloat(splittedLine[0]);
             y = Float.parseFloat(splittedLine[1]);
             height = Integer.parseInt(splittedLine[2]);
-            graph.addNode(x, y, -1, height, -1);
-
+            graph.addNode(x, y, iDCounter, height, -1);
+            iDCounter++;
             if ((i % (nofNodes / 10)) == 0) {
                 System.err.print((10 * i / (nofNodes / 10) + "% "));
             }
@@ -75,7 +76,7 @@ public class GraphReaderTXTSabine implements GraphReader {
             if (edgeAltDiff < 0) {
                 edgeAltDiff = 0;
             }
-            graph.addEdge(edgeSource, edgeTarget, edgeWeight, edgeWeight, edgeAltDiff);
+            graph.addEdge(edgeSource, edgeTarget, edgeWeight, edgeWeight, edgeAltDiff,-1,-1);
 
             if ((i % (nofEdges / 10)) == 0) {
                 System.err.print((10 * i / (nofEdges / 10) + "% "));

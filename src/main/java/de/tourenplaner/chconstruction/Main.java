@@ -164,6 +164,8 @@ public class Main {
             RAMGraph prunedGraph = ramGraph.pruneGraph();
             preCHBenchTest(ramGraph, prunedGraph);
             ramGraph = null;
+            //CSPGraphInspector cspGraphInspector = new CSPGraphInspector(prunedGraph);
+            //cspGraphInspector.inspectGraph();
 
             Constructor myCH;
             if (chType.equals("ch")){

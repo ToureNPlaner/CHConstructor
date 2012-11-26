@@ -72,8 +72,7 @@ public class CSPDijkstra {
     {
         return internRunDijkstra(src,trg,lambda, maxLambda,true);
     }
-
-    private int internRunDijkstra (int src, int trg, int lambda, int maxLambda, boolean withoutSC){
+    int internRunDijkstra(int src,int trg, int lambda, int maxLambda, boolean withoutSC){
         //if ((lastSource != src)) {
         // clean up previously touched nodes
         //System.err.println("CSPDijkstra: Src= "+src+", Trg= "+trg);
@@ -117,9 +116,9 @@ public class CSPDijkstra {
             }
         }
         // System.err.println("Dijkstra has touched "+nofTouchedNodes);
+        //printGeoPath(trg);
         return dist[trg];
     }
-
 
     void printPath(int trg) {
         if (!settled[trg])
@@ -134,16 +133,23 @@ public class CSPDijkstra {
     }
 
     void printGeoPath(int trg) {
-        if (!settled[trg])
+        if (!settled[trg]||lastSource == trg)
             return;
         int cur_node = trg;
-        System.err.println("***********************************************");
+        int cur_edge;
+        System.out.println("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>");
+        System.out.println("<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\" xmlns:gpxtpx=\"http://www.garmin.com/xmlschemas/TrackPointExtension/v1\" creator=\"Oregon 400t\" version=\"1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd\">");
+        System.out.println("  <trk>\n" + "    <name>Example GPX Document</name>");
+
+        System.out.println("<trkseg>");
         do {
-            System.err.println(myGraph.yCoord(cur_node) + "," + myGraph.xCoord(cur_node));
-            cur_node = pred[cur_node];
+            cur_edge = pred(cur_node);
+            System.out.println("<trkpt lat=\"" + myGraph.xCoord(myGraph.edgeTarget(cur_edge)) + "\" lon=\"" + myGraph.yCoord(myGraph.edgeTarget(cur_edge)) + "\"></trkpt>");
+            cur_node = myGraph.edgeSource(cur_edge);
         } while (cur_node != lastSource);
-        System.err.println(myGraph.yCoord(cur_node) + "," + myGraph.xCoord(cur_node));
-        System.err.println("***********************************************");
+        System.out.println("<trkpt lat=\"" + myGraph.xCoord(myGraph.edgeSource(cur_edge)) + "\" lon=\"" + myGraph.yCoord(myGraph.edgeSource(cur_edge)) + "\"></trkpt>");
+        System.out.println("</trkseg>\n");
+        System.out.println("</trk>\n</gpx>");
     }
 
 

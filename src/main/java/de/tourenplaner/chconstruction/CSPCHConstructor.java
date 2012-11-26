@@ -79,8 +79,6 @@ public class CSPCHConstructor extends Constructor{
                     lgthSC[nofSC] = lengthSC;
                     altSC[nofSC] = altitudeSC;
                     nofSC++;
-
-
                 }
                 if (nofSC == boundSC) return boundSC;
             }
@@ -89,7 +87,7 @@ public class CSPCHConstructor extends Constructor{
     }
 
     boolean addShortcut (CSPDijkstra myDijkstra, int curSrc, int curTrg, int weightSC, int altitudeSC) {
-        int maxLambda = 16384;
+        int maxLambda = 4096;
         int upperBound = maxLambda;
         int lowerBound = 0;
         int midLambda;
@@ -99,18 +97,22 @@ public class CSPCHConstructor extends Constructor{
                 return true;
             }
             midLambda = (upperBound + lowerBound)/2;
-            myDijkstra.runDijkstra(curSrc,curTrg,midLambda,maxLambda);
+            int dijkDist=myDijkstra.runDijkstra(curSrc,curTrg,midLambda,maxLambda);
             backTrack(myDijkstra,curSrc,curTrg);
+            int distSC=(weightSC-altitudeSC)*midLambda + maxLambda*altitudeSC;
+            assert(dijkDist<=distSC);
+
             if (weightSC == weightSum && altitudeSC == resourceSum){
                 //System.err.println("gleich");
                 return true;
             }
             if(weightSC >= weightSum && altitudeSC >= resourceSum){
                 //System.err.println("dominanter pfad");
+                assert(dijkDist<distSC);
                 return false;
             }
             //lambda of the intersection point of the both functions.
-            int lambdaIntersect = maxLambda*(altitudeSC-resourceSum)/((weightSC-weightSum)-(altitudeSC-resourceSum));
+            int lambdaIntersect = maxLambda*(resourceSum-altitudeSC)/((weightSC-weightSum)-(altitudeSC-resourceSum));
             if(lambdaIntersect < lowerBound || lambdaIntersect > upperBound){
                return false;
             }
@@ -357,7 +359,7 @@ public class CSPCHConstructor extends Constructor{
         }
 
         // now add SC edges to newTempGRaph as well as myCHGraph
-        System.out.println("No of added SCs: " + totalNofSC);
+        System.err.println("No of added SCs: " + totalNofSC);
         for (int j = 0; j < totalNofSC; j++) {
             newTempGraph.addEdge(old2new[srcSCfinal[j]], old2new[trgSCfinal[j]], wgtSCfinal[j], lgthSCfinal[j], altDiffSCfinal[j], -2, -2);
             myCHGraph.addEdge(tempGraph.altNodeID(srcSCfinal[j]), tempGraph.altNodeID(trgSCfinal[j]), wgtSCfinal[j], lgthSCfinal[j], altDiffSCfinal[j], -2, -2);

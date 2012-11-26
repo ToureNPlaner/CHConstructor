@@ -23,6 +23,8 @@ public class CSPCHDijkstra extends BDDijkstra {
     int[] predFwd;
     int[] predBwd;
     int[] pred;
+    int bestNode;
+    int src;
 
     CSPCHDijkstra(SGraph _myGraph) {
         super(_myGraph);
@@ -36,7 +38,7 @@ public class CSPCHDijkstra extends BDDijkstra {
 
     int runDijkstra(int src, int trg, int lambda, int maxLambda)    // returns distance from src to trg
     {
-
+        this.src = src;
         // clean up previously touched nodes
         for (int i = 0; i < nofTouchedNodes; i++) {
             distFwd[touchedNodes[i]] = distBwd[touchedNodes[i]] = Integer.MAX_VALUE;
@@ -49,7 +51,7 @@ public class CSPCHDijkstra extends BDDijkstra {
         labelBwd(trg, 0,-1);
 
         int bestDist = Integer.MAX_VALUE;
-        int bestNode = -1;
+        bestNode = -1;
 
         int edgeCount = 0;
         // otherwise we have to process pq until settling trg
@@ -206,6 +208,7 @@ public class CSPCHDijkstra extends BDDijkstra {
         if (bestNode != -1){
             meldPredFwdBwd(predFwd,predBwd,bestNode);
         }
+        //printGeoPath(trg);
         return bestDist;
 
     }
@@ -266,5 +269,25 @@ public class CSPCHDijkstra extends BDDijkstra {
             }
         }
         System.err.println("CH Reqs ok!");
+    }
+
+    void printGeoPath(int trg) {
+        if (bestNode == -1||src == trg)
+            return;
+        int cur_node = trg;
+        int cur_edge;
+        System.out.println("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>");
+        System.out.println("<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:gpxx=\"http://www.garmin.com/xmlschemas/GpxExtensions/v3\" xmlns:gpxtpx=\"http://www.garmin.com/xmlschemas/TrackPointExtension/v1\" creator=\"Oregon 400t\" version=\"1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd\">");
+        System.out.println("  <trk>\n" + "    <name>Example GPX Document</name>");
+
+        System.out.println("<trkseg>");
+        do {
+            cur_edge = pred(cur_node);
+            System.out.println("<trkpt lat=\"" + myGraph.xCoord(myGraph.edgeTarget(cur_edge)) + "\" lon=\"" + myGraph.yCoord(myGraph.edgeTarget(cur_edge)) + "\"></trkpt>");
+            cur_node = myGraph.edgeSource(cur_edge);
+        } while (cur_node != src);
+        System.out.println("<trkpt lat=\"" + myGraph.xCoord(myGraph.edgeSource(cur_edge)) + "\" lon=\"" + myGraph.yCoord(myGraph.edgeSource(cur_edge)) + "\"></trkpt>");
+        System.out.println("</trkseg>\n");
+        System.out.println("</trk>\n</gpx>");
     }
 }
