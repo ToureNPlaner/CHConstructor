@@ -19,6 +19,10 @@
 package de.tourenplaner.chconstruction;
 
 import java.util.PriorityQueue;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 /* computes contraction hierarchy for the given graph
  * KEEPS the given order and the altID
@@ -41,7 +45,7 @@ public class CSPCHConstructor extends Constructor{
 
     CSPCHConstructor(RAMGraph _myGraph) {
         myGraph = _myGraph;
-        myCHGraph = new RAMGraph(myGraph.nofNodes(), 10 * myGraph.nofEdges());  /// KONSTANTE GRUSEL!!!!!!!
+        myCHGraph = new RAMGraph(myGraph.nofNodes(), 5 * myGraph.nofEdges());  /// KONSTANTE GRUSEL!!!!!!!
         tempGraph = new RAMGraph(myGraph.nofNodes(), myGraph.nofEdges());
         for (int i = 0; i < myGraph.nofNodes(); i++)    // first add the original graph
         {
@@ -58,89 +62,121 @@ public class CSPCHConstructor extends Constructor{
         // tempGraph.sanityCheck();
     }
 
-    int contractNode(int curNode, CSPDijkstra myDijkstra, int[] srcSC, int[] trgSC, int[] wgtSC, int[] lgthSC, int[] altSC, int boundSC)    // return number of computed SCs
-    {                                                                                                            // stops if boundSC is reached
-        int nofSC = 0;
-        for (int i = 0; i < tempGraph.nofInEdges(curNode); i++) {
-            int curSrcEdge = tempGraph.inEdgeID(curNode, i);
-            int curSrc = tempGraph.edgeSource(curSrcEdge);
-            for (int j = 0; j < tempGraph.nofOutEdges(curNode); j++) {
-                int curTrgEdge = tempGraph.outEdgeID(curNode, j);
-                int curTrg = tempGraph.edgeTarget(curTrgEdge);
-                int weightSC = tempGraph.edgeWeight(curSrcEdge) + tempGraph.edgeWeight(curTrgEdge);
-                int lengthSC = tempGraph.edgeLength(curSrcEdge) + tempGraph.edgeLength(curTrgEdge);
-                int altitudeSC = tempGraph.edgeAltitudeDifference(curSrcEdge) + tempGraph.edgeAltitudeDifference(curTrgEdge);
-                boolean adden = addShortcut(myDijkstra,curSrc,curTrg,weightSC,altitudeSC);
-                //if (d==weightSC) // better: check if pred[curTrg]==curNode and pred[curNode]==curSrc
-                if (adden){ //&& myDijkstra.pred(curTrg) == curNode) {
-                    srcSC[nofSC] = curSrc;
-                    trgSC[nofSC] = curTrg;
-                    wgtSC[nofSC] = weightSC;
-                    lgthSC[nofSC] = lengthSC;
-                    altSC[nofSC] = altitudeSC;
-                    nofSC++;
+    private class NodeContracter implements Runnable{
+
+        CSPDijkstra cspDijkstra;
+        SGraph graph;
+        public int curNode;
+        public int[] srcSC;
+        public int[] trgSC;
+        public int[] wgtSC;
+        public int[] lgthSC;
+        public int[] altSC;
+        public int boundSC;
+        Semaphore sem;
+        int nofSC;
+
+        NodeContracter (SGraph graph, Semaphore sem)
+        {
+            this.graph = graph;
+            this.cspDijkstra = new CSPDijkstra(graph);
+            this.sem = sem;
+        }
+
+        boolean addShortcut (CSPDijkstra myDijkstra, int curSrc, int curTrg, int weightSC, int altitudeSC) {
+            int maxLambda = 4096;
+            int upperBound = maxLambda;
+            int lowerBound = 0;
+            int midLambda;
+            while (true) {
+
+                if (upperBound-lowerBound <= 1){
+                    return true;
                 }
-                if (nofSC == boundSC) return boundSC;
+                midLambda = (upperBound + lowerBound)/2;
+                int dijkDist=myDijkstra.runDijkstra(curSrc,curTrg,midLambda,maxLambda);
+                backTrack(myDijkstra,curSrc,curTrg);
+                int distSC=(weightSC-altitudeSC)*midLambda + maxLambda*altitudeSC;
+                assert(dijkDist<=distSC);
+
+                if (weightSC == weightSum && altitudeSC == resourceSum){
+                    //System.err.println("gleich");
+                    return true;
+                }
+                if(weightSC >= weightSum && altitudeSC >= resourceSum){
+                    //System.err.println("dominanter pfad");
+                    assert(dijkDist<distSC);
+                    return false;
+                }
+                //lambda of the intersection point of the both functions.
+                int lambdaIntersect = maxLambda*(resourceSum-altitudeSC)/((weightSC-weightSum)-(altitudeSC-resourceSum));
+                if(lambdaIntersect < lowerBound || lambdaIntersect > upperBound){
+                   return false;
+                }
+                if (weightSC-altitudeSC < weightSum-resourceSum){
+                    lowerBound = midLambda;
+                    //System.err.println("linke mitte");
+                } else {
+                    upperBound = midLambda;
+                    //System.err.println("rechte mitte");
+                }
+
             }
         }
-        return nofSC;
-    }
 
-    boolean addShortcut (CSPDijkstra myDijkstra, int curSrc, int curTrg, int weightSC, int altitudeSC) {
-        int maxLambda = 4096;
-        int upperBound = maxLambda;
-        int lowerBound = 0;
-        int midLambda;
-        while (true) {
-
-            if (upperBound-lowerBound <= 1){
-                return true;
+        int weightSum;
+        int resourceSum;
+        private void backTrack(CSPDijkstra myDijkstra, int curSrc, int curTrg) {
+            weightSum = 0;
+            resourceSum = 0;
+            int curNode = curTrg;
+            int curEdge;
+            while (curNode != curSrc){
+                curEdge = myDijkstra.pred(curNode);
+                weightSum += myDijkstra.myGraph.edgeWeight(curEdge);
+                resourceSum += myDijkstra.myGraph.edgeAltitudeDifference(curEdge);
+                curNode = myDijkstra.myGraph.edgeSource(curEdge);
             }
-            midLambda = (upperBound + lowerBound)/2;
-            int dijkDist=myDijkstra.runDijkstra(curSrc,curTrg,midLambda,maxLambda);
-            backTrack(myDijkstra,curSrc,curTrg);
-            int distSC=(weightSC-altitudeSC)*midLambda + maxLambda*altitudeSC;
-            assert(dijkDist<=distSC);
-
-            if (weightSC == weightSum && altitudeSC == resourceSum){
-                //System.err.println("gleich");
-                return true;
-            }
-            if(weightSC >= weightSum && altitudeSC >= resourceSum){
-                //System.err.println("dominanter pfad");
-                assert(dijkDist<distSC);
-                return false;
-            }
-            //lambda of the intersection point of the both functions.
-            int lambdaIntersect = maxLambda*(resourceSum-altitudeSC)/((weightSC-weightSum)-(altitudeSC-resourceSum));
-            if(lambdaIntersect < lowerBound || lambdaIntersect > upperBound){
-               return false;
-            }
-            if (weightSC-altitudeSC < weightSum-resourceSum){
-                lowerBound = midLambda;
-                //System.err.println("linke mitte");
-            } else {
-                upperBound = midLambda;
-                //System.err.println("rechte mitte");
-            }
-
         }
+
+        @Override
+        public void run() {
+            nofSC = 0;
+            OUTER: for (int i = 0; i < graph.nofInEdges(curNode); i++) {
+                int curSrcEdge = graph.inEdgeID(curNode, i);
+                int curSrc = graph.edgeSource(curSrcEdge);
+                for (int j = 0; j < graph.nofOutEdges(curNode); j++) {
+                    int curTrgEdge = graph.outEdgeID(curNode, j);
+                    int curTrg = graph.edgeTarget(curTrgEdge);
+                    int weightSC = graph.edgeWeight(curSrcEdge) + graph.edgeWeight(curTrgEdge);
+                    int lengthSC = graph.edgeLength(curSrcEdge) + graph.edgeLength(curTrgEdge);
+                    int altitudeSC = graph.edgeAltitudeDifference(curSrcEdge) + graph.edgeAltitudeDifference(curTrgEdge);
+                    boolean adden = addShortcut(cspDijkstra,curSrc,curTrg,weightSC,altitudeSC);
+                    //if (d==weightSC) // better: check if pred[curTrg]==curNode and pred[curNode]==curSrc
+                    if (adden){ //&& myDijkstra.pred(curTrg) == curNode) {
+                        srcSC[nofSC] = curSrc;
+                        trgSC[nofSC] = curTrg;
+                        wgtSC[nofSC] = weightSC;
+                        lgthSC[nofSC] = lengthSC;
+                        altSC[nofSC] = altitudeSC;
+                        nofSC++;
+                    }
+                    if (nofSC == boundSC){
+                        break OUTER;
+                    }
+                }
+            }
+
+            //sem.release();
+            sem.release(1);
+            return;
+        }
+
     }
 
-    int weightSum;
-    int resourceSum;
-    private void backTrack(CSPDijkstra myDijkstra, int curSrc, int curTrg) {
-        weightSum = 0;
-        resourceSum = 0;
-        int curNode = curTrg;
-        int curEdge;
-        while (curNode != curSrc){
-            curEdge = myDijkstra.pred(curNode);
-            weightSum += myDijkstra.myGraph.edgeWeight(curEdge);
-            resourceSum += myDijkstra.myGraph.edgeAltitudeDifference(curEdge);
-            curNode = myDijkstra.myGraph.edgeSource(curEdge);
-        }
-    }
+
+
+
 
     int contractLevel(int newLevel)    // contracts an independent set of the current tempGraph
     {
@@ -209,7 +245,15 @@ public class CSPCHConstructor extends Constructor{
 
 
         // instantiate Dijkstra
-        CSPDijkstra myDijkstra = new CSPDijkstra(tempGraph);
+        int nofTask = 28;
+        int nofThreads = 14;
+        ExecutorService executorService = Executors.newFixedThreadPool(nofThreads);
+        NodeContracter[] nodeContracters = new NodeContracter[nofTask];
+        Semaphore sem = new Semaphore(0);
+        //CSPDijkstra myDijkstra = new CSPDijkstra(tempGraph);
+        for (int i = 0 ; i < nodeContracters.length ; ++i){
+            nodeContracters[i] = new NodeContracter(tempGraph,sem);
+        }
 
         int tentNofSC;
         candSCoffset[0] = 0;
@@ -234,38 +278,63 @@ public class CSPCHConstructor extends Constructor{
             sumED = 0;
             tentNofSC = 0;
 
-            // temporary memory for single contraction
-            int[] srcSC = new int[boundSC];
-            int[] trgSC = new int[boundSC];
-            int[] wgtSC = new int[boundSC];
-            int[] lgthSC = new int[boundSC];
-            int[] altDiffSC = new int[boundSC];
+
+            // temporary for each thread
+            for (int i = 0 ; i < nodeContracters.length ; ++i){
+                nodeContracters[i].srcSC = new int[boundSC];
+                nodeContracters[i].trgSC = new int[boundSC];
+                nodeContracters[i].wgtSC = new int[boundSC];
+                nodeContracters[i].lgthSC = new int[boundSC];
+                nodeContracters[i].altSC = new int[boundSC];
+                nodeContracters[i].boundSC = boundSC;
+
+            }
 
 
-            for (int i = 0; i < candBound; i++) {
-                int nofSC = contractNode(candidates[i], myDijkstra, srcSC, trgSC, wgtSC, lgthSC, altDiffSC, boundSC);
-                int edgeDiff = nofSC - tempGraph.nofInEdges(candidates[i]) - tempGraph.nofOutEdges(candidates[i]);
-                if (nofSC < boundSC) {
-                    sumED += edgeDiff;
-                    validED++;
+            for (int i = 0; i < candBound; i+=nofTask) {
+                int end = Math.min(nofTask,candBound-i);
+                for (int j = 0 ; j < end; ++j){
+                    nodeContracters[j].curNode = candidates[i+j];
+                    executorService.submit(nodeContracters[j]);
                 }
 
-                for (int j = 0; j < nofSC; j++) {
-                    srcSCall[tentNofSC] = srcSC[j];
-                    trgSCall[tentNofSC] = trgSC[j];
-                    wgtSCall[tentNofSC] = wgtSC[j];
-                    lgthSCall[tentNofSC] = lgthSC[j];
-                    altDiffSCall[tentNofSC] =  altDiffSC[j];
-                    tentNofSC++;
-                }
-                contractionPQ.add(new PQElement(edgeDiff, i));
-                candSCoffset[i + 1] = tentNofSC;
+                try {
 
-                if ((i % (nofCandidates / 10 + 1)) == 0) {
-                    System.err.print((10 * i / (nofCandidates / 10 + 1) + "% "));
-                    System.err.print("(" + nofSC + "/" + edgeDiff + ") ");
+                    sem.acquire(end);
 
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
+
+
+                for (int j = 0 ; j < end ; ++j){
+                    NodeContracter curNodeContracter = nodeContracters[j];
+
+                    int edgeDiff = curNodeContracter.nofSC - tempGraph.nofInEdges(candidates[i+j]) - tempGraph.nofOutEdges(candidates[i+j]);
+                    if (curNodeContracter.nofSC < boundSC) {
+                        sumED += edgeDiff;
+                        validED++;
+                    }
+
+                    for (int k = 0; k < curNodeContracter.nofSC; k++) {
+                        srcSCall[tentNofSC] = curNodeContracter.srcSC[k];
+                        trgSCall[tentNofSC] = curNodeContracter.trgSC[k];
+                        wgtSCall[tentNofSC] = curNodeContracter.wgtSC[k];
+                        lgthSCall[tentNofSC] = curNodeContracter.lgthSC[k];
+                        altDiffSCall[tentNofSC] =  curNodeContracter.altSC[k];
+                        tentNofSC++;
+                    }
+                    contractionPQ.add(new PQElement(edgeDiff, i+j));
+                    candSCoffset[i+j + 1] = tentNofSC;
+
+                    if ((i % (nofCandidates / 10 + 1)) == 0) {
+                        System.err.print((10 * i / (nofCandidates / 10 + 1) + "% "));
+                        System.err.print("(" + curNodeContracter.nofSC + "/" + edgeDiff + ") ");
+
+                    }
+                }
+
+
             }
         } while (validED < validBound);
 
