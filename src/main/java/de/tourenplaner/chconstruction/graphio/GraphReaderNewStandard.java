@@ -1,11 +1,11 @@
 package de.tourenplaner.chconstruction.graphio;
 
 import de.tourenplaner.chconstruction.graph.RAMGraph;
-import graphtools.exceptions.NoGraphOpenException;
-import graphtools.exceptions.NoSuchElementException;
-import graphtools.maxspeed.Edge;
-import graphtools.maxspeed.Node;
-import graphtools.maxspeed.Reader;
+import fmi.graph.exceptions.NoGraphOpenException;
+import fmi.graph.exceptions.NoSuchElementException;
+import fmi.graph.maxspeed.Edge;
+import fmi.graph.maxspeed.Node;
+import fmi.graph.maxspeed.Reader;
 
 import java.io.IOException;
 import java.io.InputStream;
