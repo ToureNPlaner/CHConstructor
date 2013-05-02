@@ -1,3 +1,2 @@
 #!/bin/sh
-mvn clean
-mvn compile assembly:single
+mvn clean compile assembly:single

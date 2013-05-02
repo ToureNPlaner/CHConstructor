@@ -34,8 +34,8 @@ public class CHConstructor extends Constructor {
 
     CHConstructor(RAMGraph _myGraph) {
         myGraph = _myGraph;
-        myCHGraph = new RAMGraph(myGraph.nofNodes(), 3 * myGraph.nofEdges());  /// KONSTANTE GRUSEL!!!!!!!
-        tempGraph = new RAMGraph(myGraph.nofNodes(), myGraph.nofEdges());
+        myCHGraph = new RAMGraph(myGraph.nofNodes(), 3 * myGraph.nofEdges(), _myGraph.getMetaData());  /// KONSTANTE GRUSEL!!!!!!!
+        tempGraph = new RAMGraph(myGraph.nofNodes(), myGraph.nofEdges(), _myGraph.getMetaData());
         for (int i = 0; i < myGraph.nofNodes(); i++)    // first add the original graph
         {
             myCHGraph.addNode(myGraph.getLat(i), _myGraph.getLon(i), myGraph.getAltNodeID(i), myGraph.getHeight(i), myGraph.getOSMID(i), Integer.MAX_VALUE);
@@ -265,7 +265,7 @@ public class CHConstructor extends Constructor {
         // * construct new tempGraph consisting of all surviving nodes and edges and shortcuts
 
 
-        RAMGraph newTempGraph = new RAMGraph(newNofNodes, newNofEdges);
+        RAMGraph newTempGraph = new RAMGraph(newNofNodes, newNofEdges, myGraph.getMetaData());
         int[] old2new = new int[tempGraph.nofNodes()];
 
         for (int i = 0; i < tempGraph.nofNodes(); i++)
