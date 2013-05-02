@@ -1,0 +1,28 @@
+#!/bin/bash
+# array handling needs bash!
+
+self=$(readlink -f "$0")
+base=$(dirname "${self}")
+
+jars=("${base}"/target/chconstructor*-jar-with-dependencies.jar)
+
+# pick "last" in the list
+jar=${jars[${#jars[@]}-1]}
+
+if [ -z "${jar}" -o ! -f "${jar}" ]; then
+	echo "Couldn't find .jar file, trying to build it:" >&2
+
+	(cd "${base}"; ./build.sh)
+
+	jars=("${base}"/target/chconstructor*-jar-with-dependencies.jar)
+
+	# pick "last" in the list
+	jar=${jars[${#jars[@]}-1]}
+
+	if [ -z "${jar}" -o ! -f "${jar}" ]; then
+		echo "Couldn't find .jar file" >&2
+		exit 1
+	fi
+fi
+
+exec java -enableassertions -Xmx20000m -jar "${jar}" "$@"

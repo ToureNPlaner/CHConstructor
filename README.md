@@ -10,14 +10,22 @@ alternatively we have provided a single command Unix script for this
 
     ./build.sh
 
-and you can find the excutable jar with packaged dependencies in the
+and you can find the excutable jar with bundled dependencies in the
 target directory.
 
 Running:
 --------
-To see how to run ChConstructor compile it and execute
 
-    java -jar chconstructorg.jar --help
+    ./chconstructor --help
+
+This will also try to build it if it can't find the jar.
+
+Hardware:
+---------
+
+The wrapper script will allocate 20GB java heap memory, and for the german
+dataset at least 16GB real memory is recommended; then it will run in
+about 5 minutes. With swap it will more likely need hours.
 
 IDE Integration:
 ----------------

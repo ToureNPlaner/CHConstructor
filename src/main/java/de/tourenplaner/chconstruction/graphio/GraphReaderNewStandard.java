@@ -3,9 +3,9 @@ package de.tourenplaner.chconstruction.graphio;
 import de.tourenplaner.chconstruction.graph.RAMGraph;
 import fmi.graph.exceptions.NoGraphOpenException;
 import fmi.graph.exceptions.NoSuchElementException;
-import fmi.graph.maxspeed.reader.Edge;
-import fmi.graph.maxspeed.reader.Node;
-import fmi.graph.maxspeed.reader.Reader;
+import fmi.graph.maxspeed.Edge;
+import fmi.graph.maxspeed.Node;
+import fmi.graph.maxspeed.Reader;
 
 import java.io.IOException;
 import java.io.InputStream;
