@@ -88,8 +88,8 @@ public class BDDijkstra {
             int cur_node = cur.value;
             int cur_side = cur.queue;
 
-            //if (cur_dist>bestDist)
-            //	phaseFinished=true;
+            if (cur_dist>bestDist)
+            	phaseFinished=true;
 
             if (cur_side == 0)    // we are in forward search
             {

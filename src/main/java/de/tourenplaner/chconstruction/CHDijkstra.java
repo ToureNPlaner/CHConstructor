@@ -43,8 +43,8 @@ public class CHDijkstra extends BDDijkstra {
             int cur_node = cur.value;
             int cur_side = cur.queue;
 
-            //if (cur_dist>bestDist)
-            //	phaseFinished=true;
+            if (cur_dist>bestDist)
+            	phaseFinished=true;
 
             if (cur_side == 0)    // we are in forward search
             {
@@ -80,7 +80,7 @@ public class CHDijkstra extends BDDijkstra {
                                 edgeCount++;
                             else
                                 break;
-                            if ((myGraph.getLevel(cur_trg) >= myGraph.getLevel(cur_node)) && (distFwd[cur_trg] > cur_dist + cur_weight)) {
+                            if (distFwd[cur_trg] > cur_dist + cur_weight) { // Levels have already been checked
                                 labelFwd(cur_trg, cur_dist + cur_weight);
                             }
                         }
@@ -118,7 +118,7 @@ public class CHDijkstra extends BDDijkstra {
                                 edgeCount++;
                             else
                                 break;
-                            if ((myGraph.getLevel(cur_trg) >= myGraph.getLevel(cur_node)) && (distBwd[cur_trg] > cur_dist + cur_weight)) {
+                            if (distBwd[cur_trg] > cur_dist + cur_weight) { // Levels have already been checked
                                 labelBwd(cur_trg, cur_dist + cur_weight);
                             }
                         }
