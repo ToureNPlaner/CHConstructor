@@ -49,7 +49,7 @@ public class Main {
     private static void withChBench(RAMGraph prunedGraph, RAMGraph graphCH) {
         long curTime;
         long timeDelta;
-        Random generator = new Random();
+        Random generator = new Random(42);
         generator.setSeed(42);
         int src = generator.nextInt(prunedGraph.nofNodes());
         int trg = generator.nextInt(prunedGraph.nofNodes());
