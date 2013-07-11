@@ -51,7 +51,7 @@ public class GraphReaderTXTSabine implements GraphReader {
         line = inb.readLine();
         nofEdges = line != null ? Integer.parseInt(line) : 0;
 
-        RAMGraph graph = new RAMGraph(nofNodes, nofEdges);
+        RAMGraph graph = new RAMGraph(nofNodes, nofEdges, null);
         float x, y;
         int height;
         String[] splittedLine;

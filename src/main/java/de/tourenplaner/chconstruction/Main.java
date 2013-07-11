@@ -94,8 +94,8 @@ public class Main {
         CommandLineParser parser = new GnuParser();
         Options options = new Options();
 
-        options.addOption("if", "input-format", true, "Choose from textfunk, textsabine, text, standard");
-        options.addOption("of", "output-format", true, "Choose from bintour, textfunk, texttour, texttourcsp");
+        options.addOption("if", "input-format", true, "Choose from text, standard, standardbin");
+        options.addOption("of", "output-format", true, "Choose from texttour, texttourcsp, standard, standardbin");
         options.addOption("i", "input-file", true, "The graph file to read from, use - for standard input");
         options.addOption("o", "output-file", true, "The graph file to write the result to, use - for standard output");
         options.addOption("co", "core-file", true, "The filename for the core file");
@@ -222,18 +222,25 @@ public class Main {
                 }
             }
 
-            if (outputFormat.equals("texttour")) {
-                new GraphWriterTXTTourenplaner().writeRAMGraph(ostream, graphCH);
+            GraphWriter writer;
+            if (outputFormat.equals("bintour")) {
+                writer = new GraphWriterBinaryTourenplaner();
+            } else if (outputFormat.equals("texttour")) {
+                writer = new GraphWriterTXTTourenplaner();
             } else if (outputFormat.equals("texttourcsp")) {
-                new GraphWriterTXTTourenplanerCSP().writeRAMGraph(ostream, graphCH);
+                writer = new GraphWriterTXTTourenplanerCSP();
+            } else if (outputFormat.equals("standardbin")) {
+                writer = new GraphWriterNewStandard(true);
+            } else if (outputFormat.equals("standard")) {
+                writer = new GraphWriterNewStandard(false);
             } else if (outputFormat.equals("textfunk")) {
-                new GraphWriterTXTFunke().writeRAMGraph(ostream, graphCH);
-            } else if (outputFormat.equals("bintour")) {
-                new GraphWriterBinaryTourenplaner().writeRAMGraph(ostream, graphCH);
+                writer = new GraphWriterTXTFunke();
             } else {
                 System.err.println("Unknown output format " + outputFormat);
                 return;
             }
+
+            writer.writeRAMGraph(ostream, graphCH);
 
             if (cmd.hasOption("co")){
                 int maxLevel = 40;

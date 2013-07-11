@@ -42,7 +42,7 @@ public class GraphReaderTXTFunke implements GraphReader {
         line = inb.readLine();
         nofEdges = line != null ? Integer.parseInt(line) : 0;
 
-        RAMGraph graph = new RAMGraph(nofNodes, nofEdges);
+        RAMGraph graph = new RAMGraph(nofNodes, nofEdges, null);
         float x, y;
         int altID;
         String[] splittedLine;

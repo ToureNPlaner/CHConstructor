@@ -19,7 +19,14 @@ package de.tourenplaner.chconstruction.graph;
  * RAM and ExtMEMORY
  */
 
+import fmi.graph.metaio.MetaData;
+
 public abstract class SGraph {
+    /**
+     * access the MetaData object associated with this graph
+     * @return
+     */
+    public abstract MetaData getMetaData();
 
     // interface for accessing Graph data
     public abstract int nofEdges();

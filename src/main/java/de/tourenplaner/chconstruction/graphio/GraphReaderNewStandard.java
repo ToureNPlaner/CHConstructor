@@ -4,8 +4,9 @@ import de.tourenplaner.chconstruction.graph.RAMGraph;
 import fmi.graph.exceptions.NoGraphOpenException;
 import fmi.graph.exceptions.NoSuchElementException;
 import fmi.graph.maxspeed.Edge;
-import fmi.graph.maxspeed.Node;
+import fmi.graph.standard.Node;
 import fmi.graph.maxspeed.Reader;
+import fmi.graph.metaio.MetaData;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -120,7 +121,7 @@ public class GraphReaderNewStandard implements GraphReader {
     public RAMGraph createRAMGraph(InputStream in) throws IOException {
 
         Reader r = new Reader();
-        r.read(in);
+        MetaData meta = r.read(in);
 
         Node n;
         Edge e;
@@ -132,7 +133,7 @@ public class GraphReaderNewStandard implements GraphReader {
         try {
             nofNodes = r.getNodeCount();
             nofEdges = r.getEdgeCount();
-            RAMGraph graph = new RAMGraph(nofNodes, nofEdges);
+            RAMGraph graph = new RAMGraph(nofNodes, nofEdges, meta);
             while(r.hasNextNode())
             {
                 n = r.nextNode();
@@ -146,7 +147,7 @@ public class GraphReaderNewStandard implements GraphReader {
             System.out.println("Nodes gelesen: "+nodes+" Nodes vorhanden: "+r.getNodeCount());
             while(r.hasNextEdge())
             {
-                e = r.nextEdge();
+                e = (Edge) r.nextEdge();
                 edges++;
                 int edgeSource = e.getSource();
                 int edgeTarget = e.getTarget();
