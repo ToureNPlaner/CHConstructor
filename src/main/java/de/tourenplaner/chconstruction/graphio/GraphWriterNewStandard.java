@@ -11,6 +11,7 @@ package de.tourenplaner.chconstruction.graphio;
 import de.tourenplaner.chconstruction.graph.RAMGraph;
 import fmi.graph.chgraph.Edge;
 import fmi.graph.chgraph.Node;
+import fmi.graph.definition.GraphException;
 import fmi.graph.exceptions.InvalidFunctionException;
 import fmi.graph.metaio.MetaData;
 import fmi.graph.standard.Writer;
@@ -62,6 +63,8 @@ public class GraphWriterNewStandard implements GraphWriter {
             w.close();
         } catch (InvalidFunctionException e) {
             e.printStackTrace();
+        } catch (GraphException ex) {
+            throw new IOException(ex);
         }
         System.err.println("Writing graph took " + (System.currentTimeMillis() - curTime) + "ms");
     }

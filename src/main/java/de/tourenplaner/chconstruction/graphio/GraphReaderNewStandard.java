@@ -1,10 +1,11 @@
 package de.tourenplaner.chconstruction.graphio;
 
 import de.tourenplaner.chconstruction.graph.RAMGraph;
+import fmi.graph.definition.GraphException;
 import fmi.graph.exceptions.NoGraphOpenException;
 import fmi.graph.exceptions.NoSuchElementException;
 import fmi.graph.maxspeed.Edge;
-import fmi.graph.standard.Node;
+import fmi.graph.maxspeed.Node;
 import fmi.graph.maxspeed.Reader;
 import fmi.graph.metaio.MetaData;
 
@@ -119,18 +120,18 @@ public class GraphReaderNewStandard implements GraphReader {
 
     @Override
     public RAMGraph createRAMGraph(InputStream in) throws IOException {
-
-        Reader r = new Reader();
-        MetaData meta = r.read(in);
-
-        Node n;
-        Edge e;
-        int nodes=0;
-        int edges =0;
-        int nofNodes;
-        int nofEdges;
-        long curTime = System.currentTimeMillis();
         try {
+            Reader r = new Reader();
+            
+            MetaData meta = r.read(in);
+
+            Node n;
+            Edge e;
+            int nodes=0;
+            int edges =0;
+            int nofNodes;
+            int nofEdges;
+            long curTime = System.currentTimeMillis();
             nofNodes = r.getNodeCount();
             nofEdges = r.getEdgeCount();
             RAMGraph graph = new RAMGraph(nofNodes, nofEdges, meta);
@@ -147,7 +148,7 @@ public class GraphReaderNewStandard implements GraphReader {
             System.out.println("Nodes gelesen: "+nodes+" Nodes vorhanden: "+r.getNodeCount());
             while(r.hasNextEdge())
             {
-                e = (Edge) r.nextEdge();
+                e = r.nextEdge();
                 edges++;
                 int edgeSource = e.getSource();
                 int edgeTarget = e.getTarget();
@@ -170,6 +171,8 @@ public class GraphReaderNewStandard implements GraphReader {
             throw new IOException(ex);
         } catch (NoSuchElementException ex) {
             throw new IOException(ex);
+        } catch (GraphException e1) {
+            throw new IOException(e1);
         }
     }
 }
