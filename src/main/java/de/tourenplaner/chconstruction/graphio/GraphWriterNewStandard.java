@@ -14,7 +14,7 @@ import fmi.graph.chgraph.Node;
 import fmi.graph.definition.GraphException;
 import fmi.graph.exceptions.InvalidFunctionException;
 import fmi.graph.metaio.MetaData;
-import fmi.graph.standard.Writer;
+import fmi.graph.chgraph.Writer;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -47,8 +47,7 @@ public class GraphWriterNewStandard implements GraphWriter {
             w.setNodeCount(numNodes);
             w.setEdgeCount(numEdges);
 
-            MetaData data = ramGraph.getMetaData();
-            data.add("Timestamp", "1337");
+            MetaData data = w.prepareMetaData(ramGraph.getMetaData());
             data.add("Origin", "CHConstructor");
             w.writeMetaData(data);
 

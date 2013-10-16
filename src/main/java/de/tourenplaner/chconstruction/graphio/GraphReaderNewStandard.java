@@ -124,6 +124,10 @@ public class GraphReaderNewStandard implements GraphReader {
             Reader r = new Reader();
             
             MetaData meta = r.read(in);
+            System.out.println("Reading Graph "+meta.get("Id")+" from "+meta.get("Timestamp").asDate());
+            System.out.println("Type: "+meta.get("Type"));
+            System.out.println("Created by "+meta.get("Origin")); 
+            System.out.println("with revision "+meta.get("Revision")); 
 
             Node n;
             Edge e;
@@ -142,10 +146,10 @@ public class GraphReaderNewStandard implements GraphReader {
                 graph.addNode((float)n.getLat(), (float) n.getLon(), n.getId(), n.getElevation(),(int) n.getOsmId());
 
                 if ((nodes % (nofNodes / 10)) == 0) {
-                    System.err.print((10 * nodes / (nofNodes / 10) + "% "));
+                    System.out.print((10 * nodes / (nofNodes / 10) + "% "));
                 }
             }
-            System.out.println("Nodes gelesen: "+nodes+" Nodes vorhanden: "+r.getNodeCount());
+            System.out.println("Nodes read: "+nodes+" of: "+r.getNodeCount());
             while(r.hasNextEdge())
             {
                 e = r.nextEdge();
@@ -157,14 +161,14 @@ public class GraphReaderNewStandard implements GraphReader {
                 graph.addEdge(e.getSource(), e.getTarget(), weight, e.getWeight(), edgeHeight);
 
                 if ((edges % (nofEdges / 10)) == 0) {
-                    System.err.print((10 * edges / (nofEdges / 10) + "% "));
+                    System.out.print((10 * edges / (nofEdges / 10) + "% "));
                 }
             }
-            System.out.println("Edges gelesen: "+edges+" Edges vorhanden: "+r.getEdgeCount());
-            System.err.println("Parsing took " + (System.currentTimeMillis() - curTime));
+            System.out.println("Edges read: "+edges+" of: "+r.getEdgeCount());
+            System.out.println("Parsing took " + (System.currentTimeMillis() - curTime));
             graph.setupOffsets();
 
-            System.err.println("Read graph with " + nofNodes +
+            System.out.println("Read graph with " + nofNodes +
                     " vertices and " + nofEdges + " edges in time " + (System.currentTimeMillis() - curTime) + "ms");
             return graph;
         } catch (NoGraphOpenException ex) {
