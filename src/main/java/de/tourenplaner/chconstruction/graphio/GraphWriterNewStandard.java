@@ -56,7 +56,7 @@ public class GraphWriterNewStandard implements GraphWriter {
             }
 
             for (int i = 0; i < numEdges; i++) {
-                w.writeEdge(new Edge(ramGraph.getSource(i), ramGraph.getTarget(i), 0, ramGraph.getWeight(i),
+                w.writeEdge(new Edge(ramGraph.getSource(i), ramGraph.getTarget(i), ramGraph.getWeight(i), 0,
                         ramGraph.getEuclidianLength(i), ramGraph.getSkippedA(i), ramGraph.getSkippedB(i)));
             }
             w.close();
