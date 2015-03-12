@@ -35,7 +35,7 @@ public class CSPGraphInspector {
         int src;
         int trg;
         int lambda;
-        int maxLambda = 4096;
+        int maxLambda = 2048;
         int counter = 0;
         int cspDist;
         int[] cspPath;

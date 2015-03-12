@@ -20,9 +20,6 @@ package de.tourenplaner.chconstruction;
 
 import java.util.PriorityQueue;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicIntegerArray;
 
 /* computes contraction hierarchy for the given graph
  * KEEPS the given order and the altID
@@ -45,7 +42,7 @@ public class CSPCHConstructor extends Constructor{
 
     CSPCHConstructor(RAMGraph _myGraph) {
         myGraph = _myGraph;
-        myCHGraph = new RAMGraph(myGraph.nofNodes(), 5 * myGraph.nofEdges());  /// KONSTANTE GRUSEL!!!!!!!
+        myCHGraph = new RAMGraph(myGraph.nofNodes(), 3 * myGraph.nofEdges());  /// KONSTANTE GRUSEL!!!!!!!
         tempGraph = new RAMGraph(myGraph.nofNodes(), myGraph.nofEdges());
         for (int i = 0; i < myGraph.nofNodes(); i++)    // first add the original graph
         {
@@ -84,7 +81,7 @@ public class CSPCHConstructor extends Constructor{
         }
 
         boolean addShortcut (CSPDijkstra myDijkstra, int curSrc, int curTrg, int weightSC, int altitudeSC) {
-            int maxLambda = 4096;
+            int maxLambda = 2048;
             int upperBound = maxLambda;
             int lowerBound = 0;
             int midLambda;

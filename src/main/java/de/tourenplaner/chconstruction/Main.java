@@ -164,8 +164,6 @@ public class Main {
             RAMGraph prunedGraph = ramGraph.pruneGraph();
             preCHBenchTest(ramGraph, prunedGraph);
             ramGraph = null;
-            //CSPGraphInspector cspGraphInspector = new CSPGraphInspector(prunedGraph);
-            //cspGraphInspector.inspectGraph();
 
             Constructor myCH;
             if (chType.equals("ch")){
@@ -182,14 +180,16 @@ public class Main {
             long curTime, timeDelta;
 
             System.err.println("Starting Contraction!");
-            for (int k = 0; ; k++) {
+            for (int k = 0;  ; k++) {
                 System.err.println("*************************************** " + (System.currentTimeMillis() - overallTime));
                 curTime = System.currentTimeMillis();
                 int n = myCH.contractLevel(k);
                 timeDelta = System.currentTimeMillis() - curTime;
                 System.err.println("Level " + k + " contraction was " + timeDelta + " having " + n + " nodes");
-                if (n <= 1)
+                if (n <= 1 || (chType.equals("cspch") && k > 29))
                     break;
+                assert (chType.equals("cspch"));
+                assert (k <= 29);
             }
 
 
