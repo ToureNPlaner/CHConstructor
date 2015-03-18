@@ -121,9 +121,9 @@ public class GraphReaderNewStandard implements GraphReader {
     @Override
     public RAMGraph createRAMGraph(InputStream in) throws IOException {
         try {
-            Reader r = new Reader();
+            Reader r = new Reader(in, false);
             
-            MetaData meta = r.read(in);
+            MetaData meta = r.readMetaData();
             System.out.println("Reading Graph "+meta.get("Id")+" from "+meta.get("Timestamp").asDate());
             System.out.println("Type: "+meta.get("Type"));
             System.out.println("Created by "+meta.get("Origin")); 

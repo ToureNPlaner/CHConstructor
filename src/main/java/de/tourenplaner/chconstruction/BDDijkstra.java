@@ -23,6 +23,25 @@ import java.util.PriorityQueue;
 //		distFwd+distBwd
 
 public class BDDijkstra {
+    public class BDPQElement implements Comparable<BDPQElement> {
+
+        public int key;
+        public int value;
+        public int queue;
+
+        BDPQElement(int a, int b, int c) {
+            key = a;
+            value = b;
+            queue = c;
+        }
+
+        public int compareTo(BDPQElement o) {
+            if (key > o.key) return 1;
+            else if (key == o.key) return 0;
+            else return -1;
+        }
+    }
+
     SGraph myGraph;
     int[] distFwd;
     int[] distBwd;
@@ -146,21 +165,4 @@ public class BDDijkstra {
     }
 }
 
-class BDPQElement implements Comparable<BDPQElement> {
 
-    public int key;
-    public int value;
-    public int queue;
-
-    BDPQElement(int a, int b, int c) {
-        key = a;
-        value = b;
-        queue = c;
-    }
-
-    public int compareTo(BDPQElement o) {
-        if (key > o.key) return 1;
-        else if (key == o.key) return 0;
-        else return -1;
-    }
-}

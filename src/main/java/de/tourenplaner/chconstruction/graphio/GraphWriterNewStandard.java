@@ -36,14 +36,10 @@ public class GraphWriterNewStandard implements GraphWriter {
         int numNodes = ramGraph.nofNodes();
         int numEdges = ramGraph.nofEdges();
 
-        Writer w = new Writer();
+        Writer w;
 
         try {
-            if (binary) {
-                w.writeBin(out);
-            } else {
-                w.write(out);
-            }
+            w = new Writer(out, binary);
             w.setNodeCount(numNodes);
             w.setEdgeCount(numEdges);
 

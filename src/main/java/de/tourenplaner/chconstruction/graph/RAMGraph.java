@@ -148,7 +148,7 @@ public class RAMGraph extends SGraph {
 
     public RAMGraph compressGraph()    // creates new graph object with exactly added nodes/edges
     {
-        RAMGraph resultGraph = new RAMGraph(nodesAdded, edgesAdded, new MetaData(this.meta));
+        RAMGraph resultGraph = new RAMGraph(nodesAdded, edgesAdded, this.meta);
 
         for (int i = 0; i < nodesAdded; i++)
             resultGraph.addNode(getLat(i), getLon(i), getAltNodeID(i), getHeight(i), getOSMID(i), level[i]);
@@ -324,7 +324,7 @@ public class RAMGraph extends SGraph {
         for (int j = 0; j < nofEdges(); j++)
             if (survivorEdge[j])
                 newNofEdges++;
-        RAMGraph resultGraph = new RAMGraph(nofNodes(), newNofEdges, new MetaData(this.meta));
+        RAMGraph resultGraph = new RAMGraph(nofNodes(), newNofEdges, this.meta);
 
         for (int i = 0; i < nofNodes(); i++)
             resultGraph.addNode(getLat(i), getLon(i), getAltNodeID(i), getHeight(i), getOSMID(i), level[i]);
@@ -351,7 +351,7 @@ public class RAMGraph extends SGraph {
     public RAMGraph rearrangeGraph() {
         // rearrange graph according to levels of the nodes (small levels first)
         // does not rearrange within the nodes of one getLevel
-        RAMGraph resultGraph = new RAMGraph(nodesAdded, edgesAdded, new MetaData(this.meta));
+        RAMGraph resultGraph = new RAMGraph(nodesAdded, edgesAdded, this.meta);
 
         System.err.println("We have a graph with " + nodesAdded + " nodes and " + edgesAdded + " edges");
         int[] old2new = new int[nodesAdded];
